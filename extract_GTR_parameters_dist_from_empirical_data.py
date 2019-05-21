@@ -135,27 +135,6 @@ def parameters2(IQtree):
     df['dataset'] = os.path.basename(os.path.dirname(IQtree))
     return df[['dataset', 'sites', 'taxa', 'A-C', 'A-G', 'A-T', 'C-G', 'C-T', 'G-T', 'A', 'C', 'G', 'T', 'Gamma', 'invar']]
 
-def nucleotide_type(row):
-    '''
-    define nucleotide's type: 1st codon position, 2nd codon position, 3rd codon position, tRNA, rRNA, UCE or other
-    '''
-    if row.str.contains('1st').any() or row.str.contains('pos1').any():
-        return '1st_codon_position'
-    if row.str.contains('2nd').any() or row.str.contains('2ns').any() or row.str.contains('pos2').any():
-        return '2nd_codon_position'
-    if row.str.contains('3rd').any() or row.str.contains('pos3').any():
-        return '3rd_codon_position'
-    if row.str.contains('tRNA').any():
-        return 'tRNA'
-    if (row.str.contains('16S').any() or row.str.contains('16s').any() or row.str.contains('28S').any() or row.str.contains('5p8S').any()
-        or row.str.contains('18S').any() or row.str.contains('S7').any() or row.str.contains('lsu').any() or row.str.contains('LSU').any()):
-        return 'rRNA'
-    if (row.str.contains('Faircloth').any() or row.str.contains('McCormack').any() or row.str.contains('Moyle').any() 
-        or row.str.contains('Prebus').any() or row.str.contains('Smith').any() or row.str.contains('Branstetter').any() 
-        or row.str.contains('Crawford').any() or row.str.contains('Leache').any() or row.str.contains('uce').any()):
-        return 'UCE'
-    
-    return 'other'
 
 if __name__ == '__main__':
     print("In order to run this script all files must have the same name and extension and they should be saved in directories that have the datasets name. Please see an example below")
@@ -164,7 +143,7 @@ if __name__ == '__main__':
     proceed = input("do you want to proceed? Y/N\n")
     if proceed == 'Y':
         rootDir = '/data/Suha/GTR_parameters_dist/DNA/' #the rootDir name to the directories that contain the tree files
-        IQtreeFileName = 'alignment.nex.iqtree' #the name of the iqtree file with .iqtree extension
+        IQtreeFileName = 'model.iqtree' #the name of the iqtree file with .iqtree extension
         alignmentFileName = 'alignment.nex' #the name of the alignment file with extension
         parametersFile = 'GTRparam.csv' #the name of the GTR parameters output file with .csv extension
         
@@ -179,10 +158,7 @@ if __name__ == '__main__':
                 except:
                     print('Could not add dataset: %s to the empirical distribution' % os.path.basename(DirName))
 
-        charsetType = input("do you want to add a column for partition type: codon position, tRNA, rRNA, UCE or other? Y/N\n")
-        if charsetType == 'Y':
-                df['type'] = df.apply(nucleotide_type, axis=1)
-
+        
         df.to_csv(os.path.join(rootDir, parametersFile))
     else:
         sys.exit()
