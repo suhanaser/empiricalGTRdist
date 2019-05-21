@@ -29,8 +29,8 @@ if __name__ == '__main__':
     print("In order to run this script all files must have the same name and extension and they should be saved in directories that have the datasets name. Please see an example below")
     diagram = Tree("((----->treeFileName.treefile)----->dataset1Dir, (----->treeFileName.treefile)----->dataset2Dir, (----->treeFileName.treefile)----->dataset3Dir)rootDir;", format=1)
     print(diagram.get_ascii(show_internal=True))
-    rootDir = '/data/Suha/GTR_parameters_dist/DNA/' #the rootDir name to the directories that contain the tree files
-    treeFileName = 'partition.treefile' #the name of the tree file with .treefile extension (any newick format file can be used)
+    rootDir = '/data/Suha/GTR_parameters_dist' #the rootDir name to the directories that contain the tree files
+    treeFileName = 'branches.treefile' #the name of the tree file with .treefile extension (any newick format file can be used)
     branchLenFile = 'BranchLen.csv' #the name of the branch lengths output file with .csv extension
     proceed = input("do you want to proceed? Y/N\n")
 
