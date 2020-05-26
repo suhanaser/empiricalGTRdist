@@ -275,7 +275,7 @@ def Create_Hetero_Files(site_info_file, parameter_file, param_file_list, tree, p
 
 if __name__ == '__main__': 
     rootDir = '/data/Suha/GTR_parameters_dist' #root directory
-    paramDist = empirical_dist(pd.read_csv(os.path.join(rootDir,'GTRparam.csv'))) #param_dist.csv contains all the empirical parameters for Q matrix, base frequencies and %invariant sites
+    paramDist = empirical_dist(pd.read_csv(os.path.join(rootDir,'GTRparam.csv'))) #GTRparam.csv contains all the empirical parameters for Q matrix, base frequencies and %invariant sites
     treesDist = branch_dist(os.path.join(rootDir,'BranchLen.csv')) #BranchLen.csv contains the empirical branch lengths from all trees
     paramProbabilityDist = bestFit_paramDist(paramDist) #the best-fit probability distribution for each parameter
     branchProbabilityDist = bestFit_branchDist(treesDist) #the best-fit probability distribution of branch lengths for each dataset
