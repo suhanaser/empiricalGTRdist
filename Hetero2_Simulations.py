@@ -63,17 +63,16 @@ def empirical_dist(df):
     C = [float(i) for i in df['C'].values]
     G = [float(i) for i in df['G'].values]
     T = [float(i) for i in df['T'].values]
-    I = [float(i) for i in df['Invar'].values]
     
-    return [AC, AG, AT, CG, CT, A, C, G, T, I]
+    return [AC, AG, AT, CG, CT, A, C, G, T]
 
 def bestFit_paramDist(paramDist):
     '''
-    Given an empirical distributions of parameters (GTR, nucleotide frequencies, and ivariant sites' proportion)
+    Given an empirical distributions of parameters (GTR and nucleotide frequencies)
     return a dictionary of best-fit distribution for each parameter
     '''
     parameters = {'A-C':paramDist[0], 'A-G':paramDist[1], 'A-T':paramDist[2], 'C-G':paramDist[3], 'C-T':paramDist[4], 'A':paramDist[5],
-                  'C':paramDist[6], 'G':paramDist[7], 'T':paramDist[8], 'I':paramDist[9]}
+                  'C':paramDist[6], 'G':paramDist[7], 'T':paramDist[8]}
     fitted_dist = {}
     for parameter, dist in parameters.items():
         dst = Distribution()
@@ -88,16 +87,24 @@ def rand_GTR_dist(paramProbabilityDist):
         dis = getattr(st, dist[0])
         if parameter == 'A-C':
             AC = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
+            while AC > 100:
+                AC = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
         if parameter == 'A-G':
             AG = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
+            while AG > 100:
+                AG = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
         if parameter == 'A-T':
             AT = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
+            while AT > 100:
+                AT = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
         if parameter == 'C-G':
             CG = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
+            while CG > 100:
+                CG = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
         if parameter == 'C-T':
             CT = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
-        if parameter == 'I':
-            I = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
+            while CT > 100:
+                CT = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
         if parameter == 'A':
             A = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
         if parameter == 'C':
@@ -107,7 +114,7 @@ def rand_GTR_dist(paramProbabilityDist):
         if parameter == 'T':
             T = abs(round(dis.rvs(*dist[2][:-2], loc=dist[2][-2], scale=dist[2][-1], size=1)[0],5))
     freqSum = A + C + G + T
-    Q = np.array([AC,AG,AT,CG,CT,1,A/freqSum,C/freqSum,G/freqSum,T/freqSum, I])
+    Q = np.array([AC,AG,AT,CG,CT,1,A/freqSum,C/freqSum,G/freqSum,T/freqSum])
     return Q
 
 def branch_dist(f):
@@ -124,8 +131,9 @@ def bestFit_branchDist(brachLenDist):
     Given an empirical distributions of branch lengths from different datasets
     return a dictionary of best-fit distribution for each dataset
     '''
+    td = [i for i in brachLenDist if i>0.00001]
     dst = Distribution()
-    fitted_dist = dst.Fit(brachLenDist)
+    fitted_dist = dst.Fit(td)
     return fitted_dist
 
 def rand_branch_dist(branchProbabilityDist, n):
@@ -136,7 +144,10 @@ def rand_branch_dist(branchProbabilityDist, n):
     dis = getattr(st, branchProbabilityDist[0])
     branches = []
     for i in range(0,n):
-        branches.append(dis.rvs(*branchProbabilityDist[2][:-2], loc=branchProbabilityDist[2][-2], scale=branchProbabilityDist[2][-1], size=1)[0])
+        b = dis.rvs(*branchProbabilityDist[2][:-2], loc=branchProbabilityDist[2][-2], scale=branchProbabilityDist[2][-1], size=1)[0]
+        while b <= 0:
+            b = dis.rvs(*branchProbabilityDist[2][:-2], loc=branchProbabilityDist[2][-2], scale=branchProbabilityDist[2][-1], size=1)[0]
+        branches.append(b)
     return branches
 
 def topology_dist(simTrees, branchProbabilityDist):
@@ -174,24 +185,22 @@ def Create_Hetero_Files(site_info_file, parameter_file, param_file_list, tree, p
     '''
 #determine the initial parameters
     Q0 = rand_GTR_dist(paramProbabilityDist)
-    S0 = Q0[:-5]
-    pi0 = Q0[-5:-1]
+    S0 = Q0[:-4]
+    pi0 = Q0[-4:]
 
 #determine the root
     Q = rand_GTR_dist(paramProbabilityDist)
     if main:
-        piRoot = np.round(pi0*(v/10) + Q[-5:-1]*(1-(v/10)),5)
+        piRoot = np.round(pi0*(v/10) + Q[-4:]*(1-(v/10)),5)
         pii = np.round(pi0,5)
     else:
         piRoot = np.round(pi0,5)
 
 #write the site information file
-    invariant = Q0[-1:][0]
-    variant = round(1- invariant, 5)
-    invariant = [str(invariant)] + list(map(str,piRoot))
+    invariant = ['0.0'] + list(map(str,piRoot))
     invariant = ','.join(invariant)
     invariant = invariant.replace(',','\t')
-    variant = [str(variant)] + list(map(str,piRoot))
+    variant = ['1.0'] + list(map(str,piRoot))
     variant = ','.join(variant)
     variant = variant.replace(',','\t')
 
@@ -216,7 +225,7 @@ def Create_Hetero_Files(site_info_file, parameter_file, param_file_list, tree, p
             output_file.write('#Node	S1	S2	S3	S4	S5	S6	Pi_1	Pi_2	Pi_3	Pi_4\n')
             for tip in tips:
                 Q = rand_GTR_dist(paramProbabilityDist)
-                S = S0*(w/10) + Q[:-5]*(1-(w/10))
+                S = S0*(w/10) + Q[:-4]*(1-(w/10))
                 Q = np.append(S,pi0)
                 Q = np.round(Q, 5)
                 Q = list(map(str, Q))
@@ -225,7 +234,7 @@ def Create_Hetero_Files(site_info_file, parameter_file, param_file_list, tree, p
                 output_file.writelines('\n')
             for node in nodes:
                 Q = rand_GTR_dist(paramProbabilityDist)
-                S = S0*(w/10) + Q[:-5]*(1-(w/10))
+                S = S0*(w/10) + Q[:-4]*(1-(w/10))
                 Q = np.append(S,pi0)
                 Q = np.round(Q, 5)
                 Q = list(map(str, Q))
@@ -237,8 +246,8 @@ def Create_Hetero_Files(site_info_file, parameter_file, param_file_list, tree, p
             output_file.write('#Node	S1	S2	S3	S4	S5	S6	Pi_1	Pi_2	Pi_3	Pi_4\n')
             for tip in tips:
                 Q = rand_GTR_dist(paramProbabilityDist)
-                S = S0*(w/10) + Q[:-5]*(1-(w/10))
-                pii = pi0*(v/10) + Q[-5:-1]*(1-(v/10))
+                S = S0*(w/10) + Q[:-4]*(1-(w/10))
+                pii = pi0*(v/10) + Q[-4:]*(1-(v/10))
                 Q = np.append(S,pii)
                 Q = np.round(Q, 5)
                 Q = list(map(str, Q))
@@ -247,8 +256,8 @@ def Create_Hetero_Files(site_info_file, parameter_file, param_file_list, tree, p
                 output_file.writelines('\n')
             for node in nodes:
                 Q = rand_GTR_dist(paramProbabilityDist)
-                S = S0*(w/10) + Q[:-5]*(1-(w/10))
-                pii = pi0*(v/10) + Q[-5:-1]*(1-(v/10))
+                S = S0*(w/10) + Q[:-4]*(1-(w/10))
+                pii = pi0*(v/10) + Q[-4:]*(1-(v/10))
                 Q = np.append(S,pii)
                 Q = np.round(Q, 5)
                 Q = list(map(str, Q))
@@ -270,11 +279,11 @@ if __name__ == '__main__':
     treesDist = branch_dist(os.path.join(rootDir,'BranchLen.csv')) #BranchLen.csv contains the brach lengths from all empirical trees
     paramProbabilityDist = bestFit_paramDist(paramDist) #the best-fit probability distribution for each parameter
     branchProbabilityDist = bestFit_branchDist(treesDist) #the best-fit probability distribution of branch lengths for each dataset
-    simulatedTrees20taxa = topology_dist(os.path.join(rootDir,'simTrees20taxa.txt'), branchProbabilityDist) #simulated trees with branch length
-    simulatedTrees40taxa = topology_dist(os.path.join(rootDir,'simTrees40taxa.txt'), branchProbabilityDist) #simulated trees with branch length
-    simulatedTrees60taxa = topology_dist(os.path.join(rootDir,'simTrees60taxa.txt'), branchProbabilityDist) #simulated trees with branch length
-    simulatedTrees80taxa = topology_dist(os.path.join(rootDir,'simTrees80taxa.txt'), branchProbabilityDist) #simulated trees with branch length
-    simulatedTrees100taxa = topology_dist(os.path.join(rootDir,'simTrees100taxa.txt'), branchProbabilityDist) #simulated trees with branch length
+    simulatedTrees20taxa = topology_dist(os.path.join(rootDir,'simTrees20taxa.txt'), branchProbabilityDist) #simulated trees with branch lengths
+    simulatedTrees40taxa = topology_dist(os.path.join(rootDir,'simTrees40taxa.txt'), branchProbabilityDist) #simulated trees with branch lengths
+    simulatedTrees60taxa = topology_dist(os.path.join(rootDir,'simTrees60taxa.txt'), branchProbabilityDist) #simulated trees with branch lengths
+    simulatedTrees80taxa = topology_dist(os.path.join(rootDir,'simTrees80taxa.txt'), branchProbabilityDist) #simulated trees with branch lengths
+    simulatedTrees100taxa = topology_dist(os.path.join(rootDir,'simTrees100taxa.txt'), branchProbabilityDist) #simulated trees with branch lengths
     
     '''Hetero2 files'''
     treeFile = os.path.join(rootDir, 'tree.txt')
@@ -300,7 +309,7 @@ if __name__ == '__main__':
                             inf.writelines(trees[i])
                         Create_Hetero_Files(site_info_file, parameter_file, param_file_list, trees[i], paramProbabilityDist, m, n, v, w, main=True)
                         bashCommand = " ".join(["Hetero2", treeFile, site_info_file, param_file_list, "-l", str(n), "-o", os.path.join(rootDir,'m'+str(m)+'n'+str(n)+'w'+str(w)+'v'+str(v)+'_'+str(c))])
-                        os.system(bashCommand) #Hetero2 Command runs Hetero2 software that is available on https://github.com/thomaskf/Hetero/releases
+                        os.system(bashCommand) #run Hetero2 software that is available on https://github.com/thomaskf/Hetero/releases
                         i += 1
     for  m, trees in simulatedTrees2.items():
         i = 0
@@ -314,4 +323,4 @@ if __name__ == '__main__':
                     Create_Hetero_Files(site_info_file, parameter_file, param_file_list, trees[i], paramProbabilityDist, m, n, p, p, main=False)
                     i += 1
                     bashCommand = " ".join(["Hetero2", treeFile, site_info_file, param_file_list, "-l", str(n), "-o", os.path.join(rootDir,'m'+str(m)+'n'+str(n)+'p'+str(p)+'_'+str(c))])
-                    os.system(bashCommand) #run Hetero2 
+                    os.system(bashCommand) #run Hetero2software that is available on https://github.com/thomaskf/Hetero/releases
